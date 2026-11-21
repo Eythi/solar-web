@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https: blob: solar-media:; connect-src 'self' https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; object-src 'none'; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'none'; form-action 'none'" />
+    <meta name="author" content="QWENTITY TEAM" />
+    <title>Solar</title>
+    <!-- The splash lives here, not in React, so it is on screen from the first paint. -->
+    <link rel="preload" as="image" href="./splash-orb.png" />
+    <style>
+      html, body { margin: 0; background: #0b0910; }
+      #boot-splash {
+        --a: var(--accent, #ffc24b); --b: var(--accent-2, #ff4d4d);
+        position: fixed; inset: 0; z-index: 1000; overflow: hidden; pointer-events: none; background: #0b0910;
+        transition: opacity 0.7s ease, transform 0.7s ease;
+      }
+      #boot-splash.is-leaving { opacity: 0; transform: scale(1.06); }
+      /* Failsafe without JS: the splash dissolves by itself at 4.3-5 s (same timing as boot.js), so it
+         can never stay on top if a script fails to run. In the iPhone/Android app boot.js removes it at once. */
+      #boot-splash { animation: bs-gone 0.7s ease 4.3s forwards; }
+      @keyframes bs-gone { to { opacity: 0; visibility: hidden; } }
+      /* A ~5 s sunrise (timings match public/boot.js): the sky warms, the sun climbs slowly, the
+         horizon draws, the glow blooms, "Solar" letters in, the credit appears; the sun and glow
+         keep breathing and a light sweeps the credit until it all dissolves at 4.3-5 s. */
+      .bs-sky { position: absolute; inset: 0; background: radial-gradient(70% 55% at 50% 64%, color-mix(in srgb, var(--b) 26%, #0b0910), #0b0910 72%); animation: bs-fade 1.6s ease-out both; }
+      .bs-bloom {
+        position: absolute; left: 50%; top: 64%; width: 900px; height: 900px; margin: -450px 0 0 -450px; border-radius: 50%;
+        background: radial-gradient(circle, color-mix(in srgb, var(--a) 55%, transparent) 0%, color-mix(in srgb, var(--b) 28%, transparent) 30%, transparent 62%);
+        will-change: transform, opacity;
+        animation: bs-bloom 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.7s both, bs-breathe 2.6s ease-in-out 3.1s infinite;
+      }
+      .bs-sun {
+        position: absolute; left: 50%; top: 64%; width: 250px; height: 250px; margin: -125px 0 0 -125px;
+        /* The player's liquid sphere, rendered from src/ui/orbScene.ts (rings and glow are baked into the image)
+           Only transform and opacity animate in this splash: filters, shadows, letter-spacing and background sweeps repaint every frame and made it stutter on phones. */
+        background: url('./splash-orb.png') center / contain no-repeat;
+        will-change: transform, opacity;
+        animation: bs-rise 2.6s cubic-bezier(0.25, 0.7, 0.2, 1) 0.2s both, bs-glow 2.2s ease-in-out 2.8s infinite;
+      }
+      .bs-ground { position: absolute; left: 0; right: 0; top: 64%; bottom: 0; background: linear-gradient(#0b0910, #0b0910); }
+      .bs-horizon {
+        position: absolute; left: 0; right: 0; top: 64%; height: 2px; margin-top: -1px;
+        background: linear-gradient(90deg, transparent, var(--a) 30%, var(--b) 70%, transparent);
+        box-shadow: 0 0 24px var(--a); transform-origin: center; animation: bs-line 1.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+      }
+      .bs-word { position: absolute; left: 0; right: 0; top: calc(64% + 40px); text-align: center; font: 700 52px/1 'Unbounded Variable', 'Segoe UI', sans-serif; color: #f5efe6; letter-spacing: 0.02em; }
+      .bs-word span { display: inline-block; will-change: transform, opacity; animation: bs-letter 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both, bs-float 3s ease-in-out infinite; animation-delay: calc(1.5s + var(--i) * 0.14s), calc(2.6s + var(--i) * 0.14s); }
+      .bs-credit {
+        position: absolute; left: 0; right: 0; top: calc(64% + 112px); text-align: center; font: 600 12px/1 'Manrope Variable', 'Segoe UI', sans-serif; letter-spacing: 0.32em;
+        color: transparent; background: linear-gradient(90deg, rgba(245, 239, 230, 0.45) 40%, #fff8e6 50%, rgba(245, 239, 230, 0.45) 60%) 0 0 / 300% 100%;
+        -webkit-background-clip: text; background-clip: text;
+        animation: bs-credit-in 1.1s ease-out 2.5s both;
+      }
+      @keyframes bs-fade { from { opacity: 0; } }
+      @keyframes bs-rise { from { transform: translateY(150px) scale(0.85); opacity: 0.35; } to { transform: translateY(-80px); } }
+      @keyframes bs-glow { 50% { scale: 1.03; } }
+      @keyframes bs-bloom { from { opacity: 0; transform: translateY(-80px) scale(0.2); } to { opacity: 1; transform: translateY(-80px) scale(1); } }
+      @keyframes bs-breathe { 0%, 100% { transform: translateY(-80px) scale(1); } 50% { transform: translateY(-80px) scale(1.06); } }
+      @keyframes bs-line { from { transform: scaleX(0); opacity: 0; } }
+      @keyframes bs-letter { from { opacity: 0; transform: translateY(18px); } }
+      @keyframes bs-float { 50% { transform: translateY(-3px); } }
+      @keyframes bs-credit-in { from { opacity: 0; transform: translateY(6px); } }
+      @keyframes bs-sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
+    </style>
+    <script src="./boot.js" defer></script>
+    <script type="module" crossorigin src="./assets/index-VtdeReB_.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CRRsG5EG.css">
+  </head>
+  <body>
+    <div id="boot-splash" aria-hidden="true">
+      <div class="bs-sky"></div>
+      <div class="bs-bloom"></div>
+      <div class="bs-sun"></div>
+      <div class="bs-ground"></div>
+      <div class="bs-horizon"></div>
+      <div class="bs-word"><span style="--i: 0">S</span><span style="--i: 1">o</span><span style="--i: 2">l</span><span style="--i: 3">a</span><span style="--i: 4">r</span></div>
+      <div class="bs-credit">QWENTITY TEAM</div>
+    </div>
+    <div id="root"></div>
+  </body>
+</html>
